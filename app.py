@@ -431,7 +431,7 @@ with tab1:
 
         st.markdown("---")
         with st.expander("📊 View global feature importance"):
-            st.plotly_chart(make_global_shap(), use_container_width=True)
+            st.plotly_chart(make_whatif_gauges(prob_cur, prob_sim), use_container_width=True, key="whatif")
 
     else:
         # ── RUN PREDICTION ─────────────────────────────────────────────────
@@ -458,7 +458,7 @@ with tab1:
         col_gauge, col_right = st.columns([1, 2], gap="large")
 
         with col_gauge:
-            st.plotly_chart(make_gauge(prob), use_container_width=True)
+            st.plotly_chart(make_waterfall(X), use_container_width=True, key="waterfall")
             st.markdown(f"""
             <div style='text-align:center; margin-top:-10px'>
                 <span class='{t_class}'>{t_emoji} {tier} Risk</span>
@@ -520,9 +520,9 @@ with tab1:
         # ── ROW 2: SHAP + Comparison ──────────────────────────────────────
         col_shap, col_comp = st.columns(2, gap="medium")
         with col_shap:
-            st.plotly_chart(make_waterfall(X), use_container_width=True)
+            st.plotly_chart(make_gauge(prob), use_container_width=True, key="gauge")
         with col_comp:
-            st.plotly_chart(make_comparison(raw), use_container_width=True)
+            st.plotly_chart(make_comparison(raw), use_container_width=True, key="comparison")
 
         # ── ROW 3: Full feature table (expander) ──────────────────────────
         with st.expander("🔧 Full feature values (debug)"):
@@ -646,7 +646,7 @@ with tab3:
 
     with col_shap:
         st.markdown("### Global feature importance")
-        st.plotly_chart(make_global_shap(), use_container_width=True)
+        st.plotly_chart(make_whatif_gauges(prob_cur, prob_sim), use_container_width=True, key="whatif")
         st.caption("Mean |SHAP| measures each feature's average contribution "
                    "to the model's predictions across all 7,500 users. "
                    "Red = strong predictor · Amber = moderate · Grey = weak.")
