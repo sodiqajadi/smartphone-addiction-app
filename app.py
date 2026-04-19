@@ -546,23 +546,23 @@ with tab1:
 with tab2:
     st.markdown("""
     ### 🔬 What if I changed my habits?
-    First run a prediction in the **Predict my risk** tab.
-    Then adjust these sliders to instantly see how changing a single behaviour
-    would affect your predicted risk — without changing your original profile.
+    Adjust these sliders to instantly see how changing a single behaviour
+    would affect your predicted risk.
     """)
 
     wa, wb = st.columns(2)
     with wa:
         sim_screen = st.slider("Simulated — daily screen time (hrs)",
-                               1.0, 14.0, daily_screen, 0.5, key="s1")
+                               1.0, 14.0, float(daily_screen), 0.5, key="s1")
         sim_social = st.slider("Simulated — social media (hrs)",
-                               0.5, 6.0,  social_media,  0.5, key="s2")
+                               0.5, 6.0, float(social_media), 0.5, key="s2")
     with wb:
         sim_sleep  = st.slider("Simulated — sleep hours",
-                               4.5, 9.0,  sleep,         0.5, key="s3")
+                               4.5, 9.0, float(sleep), 0.5, key="s3")
         sim_wknd   = st.slider("Simulated — weekend screen time (hrs)",
-                               3.0, 15.0, weekend_screen,0.5, key="s4")
+                               3.0, 15.0, float(weekend_screen), 0.5, key="s4")
 
+    # Always compute both probabilities safely
     raw_sim = dict(
         age=age, daily_screen_time_hours=sim_screen,
         social_media_hours=sim_social, gaming_hours=gaming,
@@ -571,12 +571,9 @@ with tab2:
         weekend_screen_time=sim_wknd,
         stress_level_enc={"Low":0,"Medium":1,"High":2}[stress],
         academic_impact_enc=1 if academic=="Yes" else 0,
-        gender_Male=1 if gender=="Male"  else 0,
+        gender_Male=1 if gender=="Male" else 0,
         gender_Other=1 if gender=="Other" else 0,
     )
-    X_sim    = engineer(raw_sim)
-    prob_sim = float(model_bin.predict_proba(X_sim)[0,1])
-
     raw_cur = dict(
         age=age, daily_screen_time_hours=daily_screen,
         social_media_hours=social_media, gaming_hours=gaming,
@@ -588,23 +585,26 @@ with tab2:
         gender_Male=1 if gender=="Male" else 0,
         gender_Other=1 if gender=="Other" else 0,
     )
+
+    X_sim    = engineer(raw_sim)
     X_cur    = engineer(raw_cur)
-    prob_cur = float(model_bin.predict_proba(X_cur)[0,1])
-    delta    = (prob_sim - prob_cur)*100
+    prob_sim = float(model_bin.predict_proba(X_sim)[0, 1])
+    prob_cur = float(model_bin.predict_proba(X_cur)[0, 1])
+    delta    = (prob_sim - prob_cur) * 100
 
     st.plotly_chart(make_whatif_gauges(prob_cur, prob_sim),
-                    use_container_width=True)
+                    use_container_width=True, key="whatif")
 
     tier_sim = "Low" if prob_sim<0.33 else "Medium" if prob_sim<0.66 else "High"
     arrow    = "▲" if delta>0.5 else "▼" if delta<-0.5 else "●"
     if delta < -0.5:
-        st.success(f"**{arrow} {delta:+.1f} percentage points** — simulated changes reduce your risk  "
-                   f"({prob_cur*100:.1f}% → {prob_sim*100:.1f}%,  {tier_sim} risk)")
+        st.success(f"**{arrow} {delta:+.1f} percentage points** — simulated changes reduce your risk "
+                   f"({prob_cur*100:.1f}% → {prob_sim*100:.1f}%, {tier_sim} risk)")
     elif delta > 0.5:
-        st.error(f"**{arrow} {delta:+.1f} percentage points** — simulated changes increase your risk  "
-                 f"({prob_cur*100:.1f}% → {prob_sim*100:.1f}%,  {tier_sim} risk)")
+        st.error(f"**{arrow} {delta:+.1f} percentage points** — simulated changes increase your risk "
+                 f"({prob_cur*100:.1f}% → {prob_sim*100:.1f}%, {tier_sim} risk)")
     else:
-        st.info(f"**● Minimal change** — risk stays at ~{prob_sim*100:.1f}%  ({tier_sim} risk)")
+        st.info(f"**● Minimal change** — risk stays at ~{prob_sim*100:.1f}% ({tier_sim} risk)")
 
 
 # ════════════════════════════════════════════════════════
